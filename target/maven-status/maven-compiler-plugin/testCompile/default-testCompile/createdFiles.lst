@@ -1,0 +1,5 @@
+com/foot/team_service/service/PlayerServiceTest.class
+com/foot/team_service/TeamServiceApplicationTests.class
+com/foot/team_service/controller/PlayerControllerTest.class
+com/foot/team_service/controller/TeamControllerTest.class
+com/foot/team_service/service/TeamServiceTest.class

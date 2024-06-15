@@ -1,0 +1,25 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: foot-service
+  datasource:
+    username: sa
+    url: jdbc:h2:mem:footdb
+    driverClassName: org.h2.Driver
+    password: passwords
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+
+# Configuration de l'accès à Swagger UI
+#UI:http://localhost:8081/swagger-ui/index.html
+springdoc:
+  api-docs:
+    path: /api-docs
+
+
+
+

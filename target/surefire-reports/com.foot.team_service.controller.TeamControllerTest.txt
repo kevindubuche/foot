@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.foot.team_service.controller.TeamControllerTest
+-------------------------------------------------------------------------------
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.120 s -- in com.foot.team_service.controller.TeamControllerTest
