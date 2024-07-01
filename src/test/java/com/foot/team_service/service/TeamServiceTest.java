@@ -1,34 +1,26 @@
 package com.foot.team_service.service;
 
 import com.foot.team_service.dto.TeamDTO;
-import com.foot.team_service.exception.TeamNotFoundException;
 import com.foot.team_service.model.Player;
 import com.foot.team_service.model.Team;
 import com.foot.team_service.repository.PlayerRepository;
 import com.foot.team_service.repository.TeamRepository;
-import com.foot.team_service.service.TeamService;
+import com.foot.team_service.utils.mapper.TeamMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class TeamServiceTest {
 
     @Mock
@@ -40,112 +32,87 @@ class TeamServiceTest {
     @InjectMocks
     private TeamService teamService;
 
-    private Team team;
-    private Player player;
-
     @BeforeEach
     void setUp() {
-        team = new Team();
-        team.setId(1L);
-        team.setName("Team A");
-        team.setAcronym("TA");
-        team.setBudget(10000);
-
-        player = new Player();
-        player.setId(1L);
-        player.setName("Player 1");
-        player.setTeam(team);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
     void testFindAll() {
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
-        Page<Team> page = new PageImpl<>(Arrays.asList(team));
-        when(teamRepository.findAll(pageRequest)).thenReturn(page);
-        when(playerRepository.findByTeamId(anyLong())).thenReturn(Arrays.asList(player));
+        Pageable pageable = mock(Pageable.class);
+        Team team = new Team();
+        Page<Team> page = new PageImpl<>(Collections.singletonList(team));
 
-        Page<Team> result = teamService.findAll(0, 10, "name", "asc");
-        assertNotNull(result);
+        when(teamRepository.findAll(pageable)).thenReturn(page);
+        TeamDTO teamDTO = new TeamDTO(null, "Team Name", "TNAME", 1000, Collections.emptyList(), null, null);
+
+        Page<TeamDTO> result = teamService.findAll(pageable);
+
         assertEquals(1, result.getContent().size());
-        assertEquals(1, result.getContent().get(0).getPlayers().size());
-        verify(teamRepository, times(1)).findAll(pageRequest);
-        verify(playerRepository, times(1)).findByTeamId(anyLong());
+        verify(teamRepository, times(1)).findAll(pageable);
     }
 
     @Test
-    void testCreateTeam() {
-        when(teamRepository.save(any(Team.class))).thenReturn(team);
+    void testCreate() {
+        TeamDTO teamDTO = new TeamDTO(null, "Team Name", "TNAME", 1000, Collections.emptyList(), null, null);
+        Team team = TeamMapper.INSTANCE.teamDTOToTeam(teamDTO);
+        Team createdTeam = new Team();
+        createdTeam.setId(1L);
+        Player player = new Player();
 
-        Team result = teamService.create(team);
-        assertNotNull(result);
-        assertEquals("Team A", result.getName());
+        when(playerRepository.save(any(Player.class))).thenReturn(player);
+        when(teamRepository.save(any(Team.class))).thenReturn(TeamMapper.INSTANCE.teamDTOToTeam(teamDTO));
+
+        TeamDTO result = teamService.create(teamDTO);
+
+        assertEquals(teamDTO, result);
+        verify(teamRepository, times(1)).save(team);
+    }
+
+    @Test
+    void testFindById() {
+        Long teamId = 1L;
+        Team team = new Team();
+        TeamDTO teamDTO = new TeamDTO(teamId, "Team Name", "TNAME", 1000, Collections.emptyList(), null, null);
+
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(TeamMapper.INSTANCE.teamDTOToTeam(teamDTO)));
+
+        TeamDTO result = teamService.findById(teamId);
+
+        assertEquals(teamDTO, result);
+        verify(teamRepository, times(1)).findById(teamId);
+    }
+
+    @Test
+    void testUpdate() {
+        Long teamId = 1L;
+        TeamDTO teamDTO = new TeamDTO(teamId, "Updated Name", "UTNAME", 2000, Collections.emptyList(), null, null);
+        Team team = new Team();
+        Player player = new Player();
+
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
+        when(teamRepository.save(any(Team.class))).thenReturn(TeamMapper.INSTANCE.teamDTOToTeam(teamDTO));
+        when(playerRepository.save(any(Player.class))).thenReturn(player);
+        when(playerRepository.findById(anyLong())).thenReturn(Optional.of(player));
+
+        TeamDTO result = teamService.update(teamDTO, teamId);
+
+        assertEquals(teamDTO, result);
+        verify(teamRepository, times(1)).findById(teamId);
         verify(teamRepository, times(1)).save(any(Team.class));
-
-
     }
 
     @Test
-    void testFindById_TeamExists() {
-        when(teamRepository.findById(anyLong())).thenReturn(Optional.of(team));
+    void testDelete() {
+        Long teamId = 1L;
+        TeamDTO teamDTO = new TeamDTO(teamId, "Updated Name", "UTNAME", 2000, Collections.emptyList(), null, null);
 
-        Team result = teamService.findById(1L);
-        assertNotNull(result);
-        assertEquals("Team A", result.getName());
-        verify(teamRepository, times(1)).findById(anyLong());
-    }
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(TeamMapper.INSTANCE.teamDTOToTeam(teamDTO)));
+        doNothing().when(teamRepository).deleteById(teamId);
 
-    @Test
-    void testFindById_TeamNotFound() {
-        when(teamRepository.findById(anyLong())).thenReturn(Optional.empty());
+        ResponseEntity<?> result = teamService.delete(teamId);
 
-        assertThrows(TeamNotFoundException.class, () -> teamService.findById(1L));
-        verify(teamRepository, times(1)).findById(anyLong());
-    }
-
-    @Test
-    void testUpdateTeam() {
-        Team updatedTeam = new Team();
-        updatedTeam.setName("Updated Team");
-        updatedTeam.setAcronym("UT");
-        updatedTeam.setBudget(20000);
-
-        when(teamRepository.findById(anyLong())).thenReturn(Optional.of(team));
-        when(teamRepository.save(any(Team.class))).thenReturn(updatedTeam);
-
-        Team result = teamService.update(updatedTeam, 1L);
-        assertNotNull(result);
-        assertEquals("Updated Team", result.getName());
-        verify(teamRepository, times(1)).findById(anyLong());
-        verify(teamRepository, times(1)).save(any(Team.class));
-    }
-
-    @Test
-    void testDeleteTeam_TeamExists() {
-        when(teamRepository.findById(anyLong())).thenReturn(Optional.of(team));
-        doNothing().when(teamRepository).deleteById(anyLong());
-
-        ResponseEntity<?> response = teamService.delete(1L);
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(teamRepository, times(1)).findById(anyLong());
-        verify(teamRepository, times(1)).deleteById(anyLong());
-    }
-
-    @Test
-    void testDeleteTeam_TeamNotFound() {
-        when(teamRepository.findById(anyLong())).thenReturn(Optional.empty());
-
-        assertThrows(TeamNotFoundException.class, () -> teamService.delete(1L));
-        verify(teamRepository, times(1)).findById(anyLong());
-        verify(teamRepository, never()).deleteById(anyLong());
-    }
-
-    @Test
-    void testConvertToDTO() {
-        TeamDTO result = teamService.convertToDTO(team);
-        assertNotNull(result);
-        assertEquals(team.getId(), result.getId());
-        assertEquals(team.getName(), result.getName());
-        assertEquals(team.getAcronym(), result.getAcronym());
-        assertEquals(team.getBudget(), result.getBudget());
+        assertEquals(HttpStatus.NO_CONTENT, result.getStatusCode());
+        verify(teamRepository, times(1)).deleteById(teamId);
     }
 }

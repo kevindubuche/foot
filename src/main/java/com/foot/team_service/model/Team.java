@@ -3,7 +3,6 @@ package com.foot.team_service.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -43,10 +42,9 @@ public class Team extends Auditable {
     @NotNull(message = "acronym is required")
     @NotEmpty(message = "acronym can not be empty")
     private String acronym;
-    @OneToMany(mappedBy = "team")
+    @OneToMany(mappedBy = "team", fetch = FetchType.LAZY)
     private List<Player> players;
 
-    @Positive
     @NotNull(message = "budget is required")
     private Integer budget; // on stock les centimes et on divisera le montant par 100 pour l'afficher pour le user
 

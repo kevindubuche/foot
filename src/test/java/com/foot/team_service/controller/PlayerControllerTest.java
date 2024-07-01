@@ -1,32 +1,24 @@
 package com.foot.team_service.controller;
 
 import com.foot.team_service.dto.PlayerDTO;
-import com.foot.team_service.model.Player;
 import com.foot.team_service.service.PlayerService;
-import com.foot.team_service.utils.ValidationUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class PlayerControllerTest {
 
     @Mock
@@ -35,197 +27,96 @@ class PlayerControllerTest {
     @InjectMocks
     private PlayerController playerController;
 
-    private Player player;
-    private PlayerDTO playerDTO;
 
     @BeforeEach
     void setUp() {
-        player = new Player();
-        player.setId(1L);
-        player.setName("Player 1");
-        player.setPosition("Forward");
-        player.setMatchPlayed(10);
-        player.setNo(9);
-
-        playerDTO = new PlayerDTO();
-        playerDTO.setId(1L);
-        playerDTO.setName("Player 1");
-        playerDTO.setPosition("Forward");
-        playerDTO.setMatchPlayed(10);
-        playerDTO.setNo(9);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testFindAll() {
-        Page<Player> playerPage = new PageImpl<>(Arrays.asList(player));
-        when(playerService.findAll(anyInt(), anyInt(), anyString(), anyString())).thenReturn(playerPage);
-        when(playerService.convertToDTO(any(Player.class))).thenReturn(playerDTO);
+    void testGetPlayers() {
+        Pageable pageable = mock(Pageable.class);
+        Page<PlayerDTO> page = new PageImpl<>(Collections.emptyList());
 
-        ResponseEntity<Page<PlayerDTO>> response = playerController.findAll(0, 10, "name", "asc");
+        when(playerService.findAll(pageable)).thenReturn(page);
+
+        ResponseEntity<Page<PlayerDTO>> response = playerController.getPlayers(pageable);
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().getContent().size());
-        verify(playerService, times(1)).findAll(anyInt(), anyInt(), anyString(), anyString());
-        verify(playerService, times(1)).convertToDTO(any(Player.class));
+        assertEquals(page, response.getBody());
+
+        verify(playerService, times(1)).findAll(pageable);
     }
 
     @Test
     void testCreatePlayer() {
-        when(playerService.create(any(Player.class))).thenReturn(player);
-        when(playerService.convertToDTO(any(Player.class))).thenReturn(playerDTO);
+        PlayerDTO playerDTO = new PlayerDTO(null, "Player Name", 10, 0, "Forward", null, null, null);
+        PlayerDTO createdPlayer = new PlayerDTO(1L, "Player Name", 10, 0, "Forward", null, null, null);
 
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        ResponseEntity<?> response = playerController.create(player, bindingResult);
+        when(playerService.create(playerDTO)).thenReturn(createdPlayer);
+
+        ResponseEntity<?> response = playerController.createPlayer(playerDTO);
+
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(playerDTO, response.getBody());
-        verify(playerService, times(1)).create(any(Player.class));
-        verify(playerService, times(1)).convertToDTO(any(Player.class));
+        assertEquals(createdPlayer, response.getBody());
+
+        verify(playerService, times(1)).create(playerDTO);
     }
 
     @Test
-    void testCreatePlayer_InvalidName() {
-        player.setName(""); // Name cannot be empty
+    void testGetPlayerById() {
+        Long playerId = 1L;
+        PlayerDTO playerDTO = new PlayerDTO(playerId, "Player Name", 10, 0, "Forward", null, null, null);
 
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "name", "Name cannot be empty"));
+        when(playerService.findById(playerId)).thenReturn(playerDTO);
 
-        ResponseEntity<?> response = playerController.create(player, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).create(any(Player.class));
-    }
+        ResponseEntity<PlayerDTO> response = playerController.getPlayerById(playerId);
 
-    @Test
-    void testCreatePlayer_InvalidPosition() {
-        player.setPosition(""); // Position cannot be empty
-
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "position", "Position cannot be empty"));
-
-        ResponseEntity<?> response = playerController.create(player, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).create(any(Player.class));
-    }
-
-    @Test
-    void testCreatePlayer_InvalidMatchPlayed() {
-        player.setMatchPlayed(-1); // matchPlayed must be positive
-
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "matchPlayed", "matchPlayed must be positive"));
-
-        ResponseEntity<?> response = playerController.create(player, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).create(any(Player.class));
-    }
-
-    @Test
-    void testCreatePlayer_InvalidNo() {
-        player.setNo(-1); // no must be positive
-
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "no", "no must be positive"));
-
-        ResponseEntity<?> response = playerController.create(player, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).create(any(Player.class));
-    }
-
-    @Test
-    void testFindById() {
-        when(playerService.findById(anyLong())).thenReturn(player);
-        when(playerService.convertToDTO(any(Player.class))).thenReturn(playerDTO);
-
-        ResponseEntity<PlayerDTO> response = playerController.findById(1L);
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
         assertEquals(playerDTO, response.getBody());
-        verify(playerService, times(1)).findById(anyLong());
-        verify(playerService, times(1)).convertToDTO(any(Player.class));
+
+        verify(playerService, times(1)).findById(playerId);
     }
 
     @Test
     void testUpdatePlayer() {
-        when(playerService.update(any(Player.class), anyLong())).thenReturn(player);
-        when(playerService.convertToDTO(any(Player.class))).thenReturn(playerDTO);
+        Long playerId = 1L;
+        PlayerDTO playerDTO = new PlayerDTO(playerId, "Updated Name", 10, 0, "Forward", null, null, null);
 
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        ResponseEntity<?> response = playerController.update(player, 1L, bindingResult);
+        when(playerService.update(playerDTO, playerId)).thenReturn(playerDTO);
+
+        ResponseEntity<?> response = playerController.updatePlayer(playerDTO, playerId);
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
         assertEquals(playerDTO, response.getBody());
-        verify(playerService, times(1)).update(any(Player.class), anyLong());
-        verify(playerService, times(1)).convertToDTO(any(Player.class));
-    }
 
-    @Test
-    void testUpdatePlayer_InvalidName() {
-        player.setName(""); // Name cannot be empty
-
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "name", "Name cannot be empty"));
-
-        ResponseEntity<?> response = playerController.update(player, 1L, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).update(any(Player.class), anyLong());
-    }
-
-    @Test
-    void testUpdatePlayer_InvalidPosition() {
-        player.setPosition(""); // Position cannot be empty
-
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "position", "Position cannot be empty"));
-
-        ResponseEntity<?> response = playerController.update(player, 1L, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).update(any(Player.class), anyLong());
-    }
-
-    @Test
-    void testUpdatePlayer_InvalidMatchPlayed() {
-        player.setMatchPlayed(-1); // matchPlayed must be positive
-
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "matchPlayed", "matchPlayed must be positive"));
-
-        ResponseEntity<?> response = playerController.update(player, 1L, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).update(any(Player.class), anyLong());
-    }
-
-    @Test
-    void testUpdatePlayer_InvalidNo() {
-        player.setNo(-1); // no must be positive
-
-        BindingResult bindingResult = new BeanPropertyBindingResult(player, "player");
-        bindingResult.addError(new FieldError("player", "no", "no must be positive"));
-
-        ResponseEntity<?> response = playerController.update(player, 1L, bindingResult);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(playerService, times(0)).update(any(Player.class), anyLong());
+        verify(playerService, times(1)).update(playerDTO, playerId);
     }
 
     @Test
     void testDeletePlayer() {
-        when(playerService.delete(anyLong())).thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+        Long playerId = 1L;
 
-        ResponseEntity<?> response = playerController.delete(1L);
+        when(playerService.delete(playerId)).thenReturn(ResponseEntity.status(HttpStatus.NO_CONTENT).build());
+
+        ResponseEntity<?> response = playerController.deletePlayer(playerId);
+
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(playerService, times(1)).delete(anyLong());
+
+        verify(playerService, times(1)).delete(playerId);
     }
 
     @Test
-    void testFindByTeam() {
-        List<Player> players = Arrays.asList(player);
-        when(playerService.findByTeam(anyLong())).thenReturn(players);
-        when(playerService.convertToDTO(any(Player.class))).thenReturn(playerDTO);
+    void testGetPlayersByTeam() {
+        Long teamId = 1L;
+        PlayerDTO playerDTO = new PlayerDTO(1L, "Player Name", 10, 0, "Forward", teamId, null, null);
+        when(playerService.findByTeam(teamId)).thenReturn(Collections.singletonList(playerDTO));
 
-        ResponseEntity<List<PlayerDTO>> response = playerController.findByTeam(1L);
+        ResponseEntity<List<PlayerDTO>> response = playerController.getPlayersByTeam(teamId);
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        verify(playerService, times(1)).findByTeam(anyLong());
-        verify(playerService, times(1)).convertToDTO(any(Player.class));
+        assertEquals(Collections.singletonList(playerDTO), response.getBody());
+
+        verify(playerService, times(1)).findByTeam(teamId);
     }
 }

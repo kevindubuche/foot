@@ -1,0 +1,41 @@
+### getPlayers
+GET http://localhost:8081/api/v1/players?page=0&size=3&sort=name&direction=asc
+###
+
+### createPlayer
+POST http://localhost:8081/api/v1/players
+Content-Type: application/json
+
+{
+    "name": "Alex Brown",
+    "no": 60,
+    "matchPlayed": 31,
+    "position": "Milieu",
+    "teamId": 1
+}
+###
+
+### getPlayerById
+GET http://localhost:8081/api/v1/players/1
+###
+
+### getPlayersByTeam
+GET http://localhost:8081/api/v1/players/teams/1
+###
+
+### updatePlayer
+PUT http://localhost:8081/api/v1/players/1
+Content-Type: application/json
+
+{
+    "name": "Alex Brown",
+    "no": 60,
+    "matchPlayed": 31,
+    "position": "Milieu",
+    "teamId": 2
+}
+###
+
+### deletePlayer
+DELETE http://localhost:8081/api/v1/players/2
+###

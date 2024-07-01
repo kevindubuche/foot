@@ -1,22 +1,20 @@
 package com.foot.team_service.controller;
 
 import com.foot.team_service.dto.PlayerDTO;
-import com.foot.team_service.model.Player;
 import com.foot.team_service.repository.PlayerRepository;
 import com.foot.team_service.service.PlayerService;
-import com.foot.team_service.utils.ValidationUtil;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controller class for handling REST endpoints related to Player operations.
@@ -35,38 +33,26 @@ public class PlayerController {
     /**
      * Retrieves a paginated list of players sorted by specified criteria.
      *
-     * @param page      the page number to retrieve
-     * @param size      the size of the page to retrieve
-     * @param sortBy    the field to sort by
-     * @param direction the direction to sort (asc/desc)
+     * @param pageable the pagination and sorting information
      * @return a ResponseEntity containing a paginated list of PlayerDTOs
      */
     @GetMapping
-    ResponseEntity<Page<PlayerDTO>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "name") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
-        Page<Player> players = service.findAll(page, size, sortBy, direction);
-        Page<PlayerDTO> playerDTOs = players.map(service::convertToDTO);
-        return new ResponseEntity<>(playerDTOs, HttpStatus.OK);
+    ResponseEntity<Page<PlayerDTO>> getPlayers(
+            @PageableDefault(page = 0, size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<PlayerDTO> pageablePlayers = service.findAll(pageable);
+        return new ResponseEntity<>(pageablePlayers, HttpStatus.OK);
     }
 
     /**
      * Creates a new player.
      *
-     * @param player        the player to create
-     * @param bindingResult the result of the validation binding
-     * @return a ResponseEntity containing the created PlayerDTO or validation errors
+     * @param playerDTO the player data transfer object to create
+     * @return a ResponseEntity containing the created PlayerDTO
      */
     @PostMapping
-    ResponseEntity<?> create(@Valid @RequestBody Player player, BindingResult bindingResult) {
-        ResponseEntity<?> errors = ValidationUtil.validate(bindingResult);
-        if (errors != null) return errors;
-
-        Player playerCreated = service.create(player);
-        PlayerDTO playerDTO = service.convertToDTO(playerCreated);
-        return new ResponseEntity<>(playerDTO, HttpStatus.CREATED);
+    ResponseEntity<?> createPlayer(@Valid @RequestBody PlayerDTO playerDTO) {
+        PlayerDTO playerDTOCreated = service.create(playerDTO);
+        return new ResponseEntity<>(playerDTOCreated, HttpStatus.CREATED);
     }
 
     /**
@@ -76,27 +62,21 @@ public class PlayerController {
      * @return a ResponseEntity containing the PlayerDTO with the specified ID
      */
     @GetMapping("/{id}")
-    ResponseEntity<PlayerDTO> findById(@PathVariable Long id) {
-        Player player = service.findById(id);
-        PlayerDTO playerDTO = service.convertToDTO(player);
+    ResponseEntity<PlayerDTO> getPlayerById(@PathVariable Long id) {
+        PlayerDTO playerDTO = service.findById(id);
         return new ResponseEntity<>(playerDTO, HttpStatus.OK);
     }
 
     /**
      * Updates an existing player.
      *
-     * @param newPlayer     the updated player details
-     * @param id            the ID of the player to update
-     * @param bindingResult the result of the validation binding
-     * @return a ResponseEntity containing the updated PlayerDTO or validation errors
+     * @param newPlayerDTO the updated player details
+     * @param id           the ID of the player to update
+     * @return a ResponseEntity containing the updated PlayerDTO
      */
     @PutMapping("/{id}")
-    ResponseEntity<?> update(@Valid @RequestBody Player newPlayer, @PathVariable Long id, BindingResult bindingResult) {
-        ResponseEntity<?> errors = ValidationUtil.validate(bindingResult);
-        if (errors != null) return errors;
-
-        Player player = service.update(newPlayer, id);
-        PlayerDTO playerDTO = service.convertToDTO(player);
+    ResponseEntity<?> updatePlayer(@Valid @RequestBody PlayerDTO newPlayerDTO, @PathVariable Long id) {
+        PlayerDTO playerDTO = service.update(newPlayerDTO, id);
         return new ResponseEntity<>(playerDTO, HttpStatus.OK);
     }
 
@@ -107,7 +87,7 @@ public class PlayerController {
      * @return a ResponseEntity with no content status
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> deletePlayer(@PathVariable Long id) {
         return service.delete(id);
     }
 
@@ -118,11 +98,8 @@ public class PlayerController {
      * @return a ResponseEntity containing a list of PlayerDTOs belonging to the team
      */
     @GetMapping("/teams/{teamId}")
-    public ResponseEntity<List<PlayerDTO>> findByTeam(@PathVariable Long teamId) {
-        List<Player> players = service.findByTeam(teamId);
-        List<PlayerDTO> playerDTOs = players.stream()
-                .map(service::convertToDTO)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<PlayerDTO>> getPlayersByTeam(@PathVariable Long teamId) {
+        List<PlayerDTO> playerDTOs = service.findByTeam(teamId);
         return new ResponseEntity<>(playerDTOs, HttpStatus.OK);
     }
 

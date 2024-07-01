@@ -1,31 +1,31 @@
 package com.foot.team_service.service;
 
 import com.foot.team_service.dto.TeamDTO;
-import com.foot.team_service.exception.TeamNotFoundException;
+import com.foot.team_service.exception.ResourceNotFoundException;
 import com.foot.team_service.model.Player;
 import com.foot.team_service.model.Team;
 import com.foot.team_service.repository.PlayerRepository;
 import com.foot.team_service.repository.TeamRepository;
+import com.foot.team_service.utils.mapper.TeamMapper;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Team service implementation.
  *
- * @author Kevin
+ * This service provides methods for managing teams and their players, including
+ * creating, updating, deleting, and retrieving teams.
+ *
+ * @autor Kevin
  */
 @Service
 public class TeamService implements ITeamService {
@@ -39,79 +39,71 @@ public class TeamService implements ITeamService {
     /**
      * Retrieves a paginated list of teams sorted by the specified criteria.
      *
-     * @param page      the page number to retrieve
-     * @param size      the size of the page to retrieve
-     * @param sortBy    the field to sort by
-     * @param direction the direction to sort (asc/desc)
-     * @return a paginated list of team
+     * @param pageable the pagination and sorting information
+     * @return a paginated list of team DTOs
      */
-    public Page<Team> findAll(int page, int size, String sortBy, String direction) {
-        Sort.Direction sortDirection = Sort.Direction.fromString(direction);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+    public Page<TeamDTO> findAll(Pageable pageable) {
         Page<Team> teamsPageable = repository.findAll(pageable);
-        List<Team> teams = teamsPageable.getContent();
-        teams.forEach(team -> {
-            List<Player> players = playerRepository.findByTeamId(team.getId());
-            team.setPlayers(players);
-        });
-        return teamsPageable;
+        List<TeamDTO> teamDTOs = teamsPageable.getContent().stream()
+                .map(TeamMapper.INSTANCE::teamToTeamDTO)
+                .collect(Collectors.toList());
+        return new PageImpl<>(teamDTOs, pageable, teamsPageable.getTotalElements());
+
     }
 
     /**
      * Creates a new team and associates its players if provided.
      *
-     * @param team the team to create
-     * @return the created team
+     * @param teamDTO the DTO of the team to create
+     * @return the created team DTO
      */
     @Transactional
-    public Team create(Team team) {
+    public TeamDTO create(TeamDTO teamDTO) {
+        Team team = TeamMapper.INSTANCE.teamDTOToTeam(teamDTO);
         Team teamSaved = repository.save(team);
-        LOGGER.info("Team added: {}", team);
-
         for (Player player : team.getPlayers()) {
             player.setTeam(teamSaved);
             playerRepository.save(player);
         }
-        return teamSaved;
+        LOGGER.info("Team created: {}", team);
+        return TeamMapper.INSTANCE.teamToTeamDTO(teamSaved);
     }
 
     /**
      * Finds a team by its ID.
      *
-     * @param id the ID of the team
-     * @return the team with the specified ID
-     * @throws TeamNotFoundException if the team is not found
+     * @param id the ID of the team to find
+     * @return the team DTO with the specified ID
+     * @throws ResourceNotFoundException if the team is not found
      */
     @Transactional
-    public Team findById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new TeamNotFoundException(id));
+    public TeamDTO findById(Long id) {
+        Team team = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Team not found for this id :: " + id));
+        return TeamMapper.INSTANCE.teamToTeamDTO(team);
     }
 
     /**
      * Updates an existing team.
      *
-     * @param newTeam the team details to update
+     * @param teamDTO the team DTO with updated details
      * @param id      the ID of the team to update
-     * @return the updated team
-     * @throws TeamNotFoundException if the team is not found
+     * @return the updated team DTO
+     * @throws ResourceNotFoundException if the team is not found
      */
     @Transactional
-    public Team update(Team newTeam, Long id) {
-        Team teamUpdate = repository.findById(id)
-                .map(team -> {
-                    team.setName(newTeam.getName());
-                    team.setAcronym(newTeam.getAcronym());
-                    team.setBudget(newTeam.getBudget());
-                    LOGGER.info("Team updated: {}", team);
-                    return repository.save(team);
-                })
-                .orElseThrow(() -> new TeamNotFoundException(id));
-        for (Player player : newTeam.getPlayers()) {
+    public TeamDTO update(TeamDTO teamDTO, Long id) {
+        repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Team not found for this id :: " + id));
+        Team team = TeamMapper.INSTANCE.teamDTOToTeam(teamDTO);
+        team.setId(id);
+        Team teamUpdate = repository.save(team);
+        for (Player player : team.getPlayers()) {
             player.setTeam(teamUpdate);
             playerRepository.save(player);
         }
-        return teamUpdate;
+        LOGGER.info("Team updated: {}", team);
+        return TeamMapper.INSTANCE.teamToTeamDTO(teamUpdate);
     }
 
     /**
@@ -119,47 +111,14 @@ public class TeamService implements ITeamService {
      *
      * @param id the ID of the team to delete
      * @return a response entity with no content status
-     * @throws TeamNotFoundException if the team is not found
+     * @throws ResourceNotFoundException if the team is not found
      */
     @Transactional
     public ResponseEntity<?> delete(Long id) {
-        Optional<Team> team = repository.findById(id);
-        if (!team.isPresent()) {
-            throw new TeamNotFoundException(id);
-        }
+        repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Team not found for this id :: " + id));
         repository.deleteById(id);
-        LOGGER.info("Team deleted: {}", team.get());
+        LOGGER.info("Team {} deleted", id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
-
-    /**
-     * Converts a Team entity to a TeamDTO.
-     *
-     * @param team the Team entity to convert
-     * @return the converted TeamDTO
-     */
-    public TeamDTO convertToDTO(Team team) {
-        TeamDTO teamDTO = new TeamDTO();
-        teamDTO.setId(team.getId());
-        teamDTO.setName(team.getName());
-        teamDTO.setAcronym(team.getAcronym());
-        teamDTO.setBudget(team.getBudget());
-        teamDTO.setCreatedAt(team.getCreatedAt());
-        teamDTO.setUpdatedAt(team.getUpdatedAt());
-        teamDTO.setPlayers(team.getPlayers().stream()
-                .map(player -> {
-                    TeamDTO.PlayerDTO playerDTO = new TeamDTO.PlayerDTO();
-                    playerDTO.setId(player.getId());
-                    playerDTO.setName(player.getName());
-                    playerDTO.setNo(player.getNo());
-                    playerDTO.setMatchPlayed(player.getMatchPlayed());
-                    playerDTO.setPosition(player.getPosition());
-                    playerDTO.setCreatedAt(player.getCreatedAt());
-                    playerDTO.setUpdatedAt(player.getUpdatedAt());
-                    return playerDTO;
-                })
-                .collect(Collectors.toList()));
-        return teamDTO;
     }
 }

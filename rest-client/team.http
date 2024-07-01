@@ -1,0 +1,51 @@
+### getTeams
+GET http://localhost:8081/api/v1/teams?page=0&size=5&sortBy=name&direction=desc
+###
+
+### createTeam
+POST http://localhost:8081/api/v1/teams
+Content-Type: application/json
+
+{
+    "name": "Equipe Nice U20",
+    "acronym": "OGC-U20",
+    "budget": 5367,
+    "players": [
+        {
+            "id": 19,
+            "name": "Alex Jones",
+            "no": 8,
+            "matchPlayed": 53,
+            "position": "Attaquant"
+        }
+    ]
+}
+###
+
+### getTeamById
+GET http://localhost:8081/api/v1/teams/1
+###
+
+### updateTeam
+PUT http://localhost:8081/api/v1/teams/1
+Content-Type: application/json
+
+{
+    "name": "Equipe Nice U20",
+    "acronym": "OGC-U20",
+    "budget": 5367,
+    "players": [
+        {
+            "id": 19,
+            "name": "Alex Jones",
+            "no": 8,
+            "matchPlayed": 53,
+            "position": "Attaquant"
+        }
+    ]
+}
+###
+
+### deleteTeam
+DELETE http://localhost:8081/api/v1/teams/2
+###

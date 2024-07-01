@@ -2,7 +2,9 @@ package com.foot.team_service.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -18,6 +20,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @MappedSuperclass
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class Auditable {
 
     /**

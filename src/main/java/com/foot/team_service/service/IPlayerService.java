@@ -1,7 +1,8 @@
 package com.foot.team_service.service;
 
-import com.foot.team_service.model.Player;
+import com.foot.team_service.dto.PlayerDTO;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -16,23 +17,20 @@ import java.util.List;
 public interface IPlayerService {
 
     /**
-     * Retrieves a paginated list of players sorted by the specified criteria.
+     * Retrieves a paginated list of players.
      *
-     * @param page      the page number to retrieve
-     * @param size      the size of the page to retrieve
-     * @param sortBy    the field to sort by
-     * @param direction the direction to sort (asc/desc)
+     * @param pageable the pagination and sorting information
      * @return a paginated list of players
      */
-    Page<Player> findAll(int page, int size, String sortBy, String direction);
+    Page<PlayerDTO> findAll(Pageable pageable);
 
     /**
      * Creates a new player.
      *
-     * @param player the player to create
-     * @return the created player
+     * @param playerDTO the player data transfer object to create
+     * @return the created player DTO
      */
-    Player create(Player player);
+    PlayerDTO create(PlayerDTO playerDTO);
 
     /**
      * Finds a player by its ID.
@@ -40,16 +38,16 @@ public interface IPlayerService {
      * @param id the ID of the player
      * @return the player with the specified ID
      */
-    Player findById(Long id);
+    PlayerDTO findById(Long id);
 
     /**
      * Updates an existing player.
      *
-     * @param newPlayer the player details to update
+     * @param playerDTO the player DTO containing the updated details
      * @param id        the ID of the player to update
-     * @return the updated player
+     * @return the updated player DTO
      */
-    Player update(Player newPlayer, Long id);
+    PlayerDTO update(PlayerDTO playerDTO, Long id);
 
     /**
      * Deletes a player by its ID.
@@ -65,6 +63,6 @@ public interface IPlayerService {
      * @param teamId the ID of the team to find players for
      * @return a list of players belonging to the team
      */
-    List<Player> findByTeam(Long teamId);
+    List<PlayerDTO> findByTeam(Long teamId);
 
 }

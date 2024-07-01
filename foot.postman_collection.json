@@ -50,13 +50,13 @@
 					"response": []
 				},
 				{
-					"name": "addPlayer",
+					"name": "createPlayer",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Alex Brown\",\n    \"no\": 60,\n    \"matchPlayed\": 31,\n    \"position\": \"Milieu\",\n    \"team\": {\n        \"id\": 1\n    }\n}",
+							"raw": "{\n    \"name\": \"Alex Brown\",\n    \"no\": 60,\n    \"matchPlayed\": 31,\n    \"position\": \"Milieu\",\n    \"teamId\": 1\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -80,7 +80,7 @@
 					"response": []
 				},
 				{
-					"name": "getPlayer",
+					"name": "getPlayerById",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -102,7 +102,7 @@
 					"response": []
 				},
 				{
-					"name": "getPlayersOfTeam",
+					"name": "getPlayersByTeam",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -131,7 +131,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Alex Brown\",\n    \"no\": 60,\n    \"matchPlayed\": 31,\n    \"position\": \"Milieu\",\n    \"team\": {\n        \"id\": 3\n    }\n}",
+							"raw": "{\n    \"name\": \"Alex Brown\",\n    \"no\": 60,\n    \"matchPlayed\": 31,\n    \"position\": \"Milieu\",\n    \"teamId\":2\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -188,7 +188,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8081/api/v1/teams?page=0&size=5&sortBy=name&direction=desc",
+							"raw": "http://localhost:8081/api/v1/teams?page=0&size=1&sortBy=name&direction=desc",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -206,7 +206,7 @@
 								},
 								{
 									"key": "size",
-									"value": "5"
+									"value": "1"
 								},
 								{
 									"key": "sortBy",
@@ -222,7 +222,7 @@
 					"response": []
 				},
 				{
-					"name": "addTeam",
+					"name": "createTeam",
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -252,7 +252,7 @@
 					"response": []
 				},
 				{
-					"name": "getTeam",
+					"name": "getTeamById",
 					"request": {
 						"method": "GET",
 						"header": [],

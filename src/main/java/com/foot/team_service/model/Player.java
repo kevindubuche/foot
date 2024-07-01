@@ -5,8 +5,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 /**
  * Entity class representing a Player.
@@ -22,7 +21,10 @@ import lombok.EqualsAndHashCode;
  */
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Player extends Auditable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,7 +34,7 @@ public class Player extends Auditable {
     @NotEmpty(message = "name can not be empty")
     private String name;
 
-    @Positive
+    @Positive(message = "number must be positive")
     private Integer no; //numéro du joueur; on pourrait mettre @Column(unique = true) pour s'assurer que 2 joueurs n'aient pas le meme numéro
 
     private int matchPlayed; //nombre de match joué

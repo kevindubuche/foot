@@ -12,6 +12,7 @@
       - http://localhost:8081/api/v1/teams
       - http://localhost:8081/api/v1/player
       - ou via le swagger : http://localhost:8081/swagger-ui/index.html
+      - ou via les http files (dans rest-client)
 
 
 # 2- Architecture & choix technique
@@ -73,7 +74,8 @@ On a 3 blocs:
   - [x] Utilisation des couches de Spring et des dépendances Maven au mieux 
   - [x] Utilisation des abstractions / implementations
   - [x] Documentation exhaustive (ah oui !  😀 😀)
-  - [x] Gestion des exceptions
+  - [x] Gestion des exceptions et des erreurs de manière générique
+  - [x] Pas d'eposition des entités métiers : utilisation et validation des DTO en input/output
   - [x] Tracer les actions (ajout date et heure de création et de mise à jour)
   - [x] Des données de test générées au lancement de l'application
 - Idées d'amélioration :
@@ -85,4 +87,4 @@ On a 3 blocs:
   - Ne pas supprimer les données (uniquement changer son etat) : faire du soft delete
 
 ### Mot de la fin :
-- N'hésitez pas à me contacter pour plus de détails/explications; d'ici là g33cker bien !
+- N'hésitez pas à me contacter pour plus de détails/explications; d'ici là g33cker and enjoy it !

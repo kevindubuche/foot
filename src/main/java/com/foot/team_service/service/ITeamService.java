@@ -1,7 +1,8 @@
 package com.foot.team_service.service;
 
-import com.foot.team_service.model.Team;
+import com.foot.team_service.dto.TeamDTO;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -14,23 +15,20 @@ import org.springframework.http.ResponseEntity;
 public interface ITeamService {
 
     /**
-     * Retrieves a paginated list of teams sorted by the specified criteria.
+     * Retrieves a paginated list of teams.
      *
-     * @param page      the page number to retrieve
-     * @param size      the size of the page to retrieve
-     * @param sortBy    the field to sort by
-     * @param direction the direction to sort (asc/desc)
+     * @param pageable the pagination and sorting information
      * @return a paginated list of teams
      */
-    Page<Team> findAll(int page, int size, String sortBy, String direction);
+    Page<TeamDTO> findAll(Pageable pageable);
 
     /**
      * Creates a new team.
      *
-     * @param team the team to create
-     * @return the created team
+     * @param teamDTO the team data transfer object to create
+     * @return the created team DTO
      */
-    Team create(Team team);
+    TeamDTO create(TeamDTO teamDTO);
 
     /**
      * Finds a team by its ID.
@@ -38,16 +36,16 @@ public interface ITeamService {
      * @param id the ID of the team
      * @return the team with the specified ID
      */
-    Team findById(Long id);
+    TeamDTO findById(Long id);
 
     /**
      * Updates an existing team.
      *
-     * @param newTeam the team details to update
-     * @param id      the ID of the team to update
-     * @return the updated team
+     * @param newTeamDTO the team DTO containing the updated details
+     * @param id the ID of the team to update
+     * @return the updated team DTO
      */
-    Team update(Team newTeam, Long id);
+    TeamDTO update(TeamDTO newTeamDTO, Long id);
 
     /**
      * Deletes a team by its ID.
